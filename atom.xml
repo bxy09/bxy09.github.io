@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Bxy&#39;s blog</title>
+  
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://bxy09.github.io/"/>
+  <updated>2017-08-09T09:10:23.894Z</updated>
+  <id>http://bxy09.github.io/</id>
+  
+  <author>
+    <name>bxy</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>CoreOS 上布置K8节点</title>
+    <link href="http://bxy09.github.io/2016/11/12/coreos-k8/"/>
+    <id>http://bxy09.github.io/2016/11/12/coreos-k8/</id>
+    <published>2016-11-12T21:55:22.000Z</published>
+    <updated>2017-08-09T09:10:23.894Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="CoreOS-介绍"><a href="#CoreOS-介绍" class="headerlink" title="CoreOS 介绍"></a>CoreOS 介绍</h1><h1 id="布置方案"><a href="#布置方案" class="headerlink" title="布置方案"></a>布置方案</h1><p>CoreOS 系统在启动时，会加载系统配置文件(<a href="https://coreos.com/os/docs/latest/cloud-config.html" target="_blank" rel="external">Cloud-config</a>)。<br>该配置文件的路径由系统安装时决定，青云所配置的路径为：<code>/usr/share/oem/cloud-config.yml</code></p>
+<p>其中的配置的编写方式，参考 CoreOS 系统<a href="https://coreos.com/os/docs/latest/cloud-config.html" target="_blank" rel="external">官方文档</a>进行配置。</p>
+<p>我们所采用的 kube-slave 配置方案如下：<br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#cloud-config</span></div><div class="line"><span class="comment">#/usr/share/oem/cloud-config.yml</span></div><div class="line"><span class="attr">write_files:</span></div><div class="line">  <span class="comment"># 扫描flannel环境文件是否就绪，一共扫描五次，每次间隔1秒</span></div><div class="line"><span class="attr">  - path:</span> <span class="string">"/opt/bin/check-flanneld-file"</span></div><div class="line"><span class="attr">    permissions:</span> <span class="string">"0755"</span></div><div class="line"><span class="attr">    owner:</span> <span class="string">"root"</span></div><div class="line"><span class="attr">    content:</span> <span class="string">|</span></div><div class="line"><span class="string">      #!/bin/bash</span></div><div class="line"><span class="string">      for i in &#123;1..5&#125;; do</span></div><div class="line"><span class="string">      if [[ -f /run/flannel_docker_opts.env ]]; then</span></div><div class="line"><span class="string">        exit 0</span></div><div class="line"><span class="string">      fi</span></div><div class="line"><span class="string">      sleep 1</span></div><div class="line"><span class="string">      done</span></div><div class="line"><span class="string">      exit 1</span></div><div class="line"><span class="string"></span><span class="attr">  - path:</span> <span class="string">"/opt/bin/addr"</span></div><div class="line"><span class="attr">    permissions:</span> <span class="string">"0755"</span></div><div class="line"><span class="attr">    owner:</span> <span class="string">"root"</span></div><div class="line"><span class="attr">    content:</span> <span class="string">|</span></div><div class="line"><span class="string">      #!/bin/bash</span></div><div class="line"><span class="string">      #/opt/sbin/addr</span></div><div class="line"><span class="string">      ip addr show dev eth0 scope global|awk '/inet/&#123;print substr($2,0,length($2)-3)&#125;'</span></div><div class="line"><span class="string"></span><span class="attr">coreos:</span></div><div class="line">  <span class="comment"># 配置flannel参数，可以考虑不使用默认的flannel配置，因为默认配置采用从coreos拖取的镜像，在版本更新时，启动过慢</span></div><div class="line"><span class="attr">  flannel:</span></div><div class="line"><span class="attr">    etcd_endpoints:</span> <span class="string">"http://192.168.100.100:4001"</span></div><div class="line">  <span class="comment"># docker配置加入启动前对 flannel 配置文件的确认</span></div><div class="line"><span class="attr">  units:</span></div><div class="line"><span class="attr">    - name:</span> <span class="string">"docker.service"</span></div><div class="line"><span class="attr">      command:</span> <span class="string">"start"</span></div><div class="line"><span class="attr">      drop-ins:</span></div><div class="line"><span class="attr">        - name:</span> <span class="string">"exec_pre.conf"</span></div><div class="line"><span class="attr">          content:</span> <span class="string">|</span></div><div class="line"><span class="string">            [Service]</span></div><div class="line"><span class="string">            ExecStartPre=/opt/bin/check-flanneld-file</span></div><div class="line"><span class="string">    # kubelet 配置</span></div><div class="line"><span class="string"></span><span class="attr">    - name:</span> <span class="string">"kubelet.service"</span></div><div class="line"><span class="attr">      command:</span> <span class="string">"start"</span></div><div class="line"><span class="attr">      enable:</span> <span class="literal">true</span></div><div class="line"><span class="attr">      content:</span> <span class="string">|</span></div><div class="line"><span class="string">        [Unit]</span></div><div class="line"><span class="string">        Description=Kubelet service</span></div><div class="line"><span class="string">        After=flanneld.service</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        [Service]</span></div><div class="line"><span class="string">        Environment='KUBELET_OPTS=\</span></div><div class="line"><span class="string">          --api-servers=http://192.168.100.100:8080 \</span></div><div class="line"><span class="string">          --logtostderr=true \</span></div><div class="line"><span class="string">          --cluster-dns=192.168.3.10 \</span></div><div class="line"><span class="string">          --cluster-domain=cluster.local \</span></div><div class="line"><span class="string">          --pod-infra-container-image=daocloud.io/gpx_dev/pause:0.8.0 \</span></div><div class="line"><span class="string">          --config='</span></div><div class="line"><span class="string">        ExecStart=/usr/bin/env bash -c '/opt/bin/kubelet --hostname-override=`/opt/bin/addr` $KUBELET_OPTS'</span></div><div class="line"><span class="string">        Restart=always</span></div><div class="line"><span class="string">        RestartSec=5</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        [Install]</span></div><div class="line"><span class="string">        WantedBy=multi-user.target</span></div><div class="line"><span class="string">    # kube-proxy 配置</span></div><div class="line"><span class="string"></span><span class="attr">    - name:</span> <span class="string">"kube-proxy.service"</span></div><div class="line"><span class="attr">      command:</span> <span class="string">"start"</span></div><div class="line"><span class="attr">      enable:</span> <span class="literal">true</span></div><div class="line"><span class="attr">      content:</span> <span class="string">|</span></div><div class="line"><span class="string">        [Unit]</span></div><div class="line"><span class="string">        Description=Kube-proxy service</span></div><div class="line"><span class="string">        After=flanneld.service</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        [Service]</span></div><div class="line"><span class="string">        Environment='KUBE_PROXY_OPTS=\</span></div><div class="line"><span class="string">          --master=http://192.168.100.100:8080 \</span></div><div class="line"><span class="string">          --logtostderr=true'</span></div><div class="line"><span class="string">        ExecStart=/usr/bin/env bash -c '/opt/bin/kube-proxy --hostname-override=`/opt/bin/addr` $KUBE_PROXY_OPTS'</span></div><div class="line"><span class="string">        Restart=always</span></div><div class="line"><span class="string">        RestartSec=5</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        [Install]</span></div><div class="line"><span class="string">        WantedBy=multi-user.target</span></div><div class="line"><span class="string">    # 可能的文件挂载需求</span></div><div class="line"><span class="string">    - name : "mnt-csvware.mount"</span></div><div class="line"><span class="string"></span><span class="attr">      command:</span> <span class="string">"start"</span></div><div class="line"><span class="attr">      enable:</span> <span class="literal">true</span></div><div class="line"><span class="attr">      content:</span> <span class="string">|</span></div><div class="line"><span class="string">        [Unit]</span></div><div class="line"><span class="string">        Description=CSV Data</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        [Mount]</span></div><div class="line"><span class="string">        What=/dev/sdb</span></div><div class="line"><span class="string">        Where=/mnt/csvware</span></div><div class="line"><span class="string">        Type=ext4</span></div><div class="line"><span class="string">        Options=rw,relatime,errors=remount-ro,data=ordered</span></div><div class="line"><span class="string"></span></div><div class="line"><span class="string">        [Install]</span></div><div class="line"><span class="string">        WantedBy = multi-user.target</span></div></pre></td></tr></table></figure></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;CoreOS-介绍&quot;&gt;&lt;a href=&quot;#CoreOS-介绍&quot; class=&quot;headerlink&quot; title=&quot;CoreOS 介绍&quot;&gt;&lt;/a&gt;CoreOS 介绍&lt;/h1&gt;&lt;h1 id=&quot;布置方案&quot;&gt;&lt;a href=&quot;#布置方案&quot; class=&quot;headerli
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>nc (netcat) 的常见用法</title>
+    <link href="http://bxy09.github.io/2016/03/11/nc/"/>
+    <id>http://bxy09.github.io/2016/03/11/nc/</id>
+    <published>2016-03-11T16:55:54.000Z</published>
+    <updated>2017-08-09T09:10:23.894Z</updated>
+    
+    <content type="html"><![CDATA[<p>nc 是一个很好用的网络工具，在所有系统中都能找到它。他的主要用途是通过 tcp 、与 udp 读写数据。<br>因此有人用它来进行文件传输、端口转发、端口扫描、网络聊天等工作。</p>
+<a id="more"></a>
+<h1 id="参数简单介绍"><a href="#参数简单介绍" class="headerlink" title="参数简单介绍"></a>参数简单介绍</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nc [options] [hostname] [port[s]]</div></pre></td></tr></table></figure>
+<p>在此只介绍之后会用到的一些参数，更多的参数请参考 man。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[-l] 作为服务器监听端口</div><div class="line">[-p port] 指定本地端口</div><div class="line">[-v] 展示连接详细信息</div><div class="line">[-w timeout] 超时时间设置（秒），包括连接超时以及标准输入的超时</div><div class="line">[-z] 扫描端口，不传输任何数据</div></pre></td></tr></table></figure></p>
+<h1 id="常见应用"><a href="#常见应用" class="headerlink" title="常见应用"></a>常见应用</h1><h2 id="端口扫描"><a href="#端口扫描" class="headerlink" title="端口扫描"></a>端口扫描</h2><p>扫描192.168.228.222 1-1000端口<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nc -vzw 1 192.168.228.222 1-1000</div></pre></td></tr></table></figure></p>
+<p><code>-v</code> 展示详细信息，可以展示失败信息。</p>
+<p><code>-z</code> 关闭输入输出，方便扫描。</p>
+<p><code>-w 1</code> 加快扫描速度，跳过超时连接。</p>
+<h2 id="单页面服务"><a href="#单页面服务" class="headerlink" title="单页面服务"></a>单页面服务</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">while true; do nc -l 8080 &lt; a.html; done</div></pre></td></tr></table></figure>
+<p>在8080端口打开服务，展示单文件网页<code>a.html</code>。</p>
+<h2 id="网络聊天"><a href="#网络聊天" class="headerlink" title="网络聊天"></a>网络聊天</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#A:</div><div class="line">nc -lp 1234</div><div class="line">#B:</div><div class="line">nc hostname 1234</div></pre></td></tr></table></figure>
+<p>A为服务器，通过<code>p</code>指定服务端口。<br>B为客户端，连接服务器的特定端口。</p>
+<p>注意，在 mac 系统中，服务器命令为 <code>nc -l 1234</code>，不需要<code>-p</code>。</p>
+<h2 id="文件传输"><a href="#文件传输" class="headerlink" title="文件传输"></a>文件传输</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#A:</div><div class="line">nc -lp 1234 &gt;  file</div><div class="line">#B:</div><div class="line">nc -w 1 hostname 1234 &lt; file</div></pre></td></tr></table></figure>
+<p>文件从B发送到A，其中 <code>-w</code> 参数使得文件传输完毕之后连接关闭，<br>该参数很多时候不必要，因为文件末尾的EOF就可以关闭通道。</p>
+<p>还是要注意mac下监听端口不需要<code>-p</code>参数。</p>
+<h2 id="目录传输"><a href="#目录传输" class="headerlink" title="目录传输"></a>目录传输</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#A:</div><div class="line">nc -l 1234 |tar xzvf -</div><div class="line">#B:</div><div class="line">tar czvf - dir|nc hostname 1234</div></pre></td></tr></table></figure>
+<p>文件夹从B发送到A，传输方式为目录打包压缩以后再传输，到达目的地后再解压。</p>
+<h2 id="端口转发"><a href="#端口转发" class="headerlink" title="端口转发"></a>端口转发</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">mknod backpipe p</div><div class="line">nc -lp port1 0&lt; backpipe | nc host2 port2 &gt; backpipe</div></pre></td></tr></table></figure>
+<p>创建管道 <code>backpipe</code> 的作用是将转发后的结果通过标准输出灌入到管道，再送回到监听端返回回去。<br>可以通过 <code>tee</code> 复制 <code>backpipe</code> 将其也打印出来，方便调试，如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">mknod backpipe p</div><div class="line">nc -lp port1 0&lt; backpipe | nc host2 port2 |tee backpipe</div></pre></td></tr></table></figure>
+<p>以上是一个将监听到的信息通过一个客户端发送出去的转发器。这是我们最常见的需求。还可以任意组合得到其他组合。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#Server</div><div class="line">mknod backpipe p</div><div class="line">nc -lp port1 0&lt; backpipe | nc -lp port2 &gt; backpipe</div><div class="line">#ClientA</div><div class="line">nc host1 port1</div><div class="line">#ClientB</div><div class="line">nc host1 port2</div></pre></td></tr></table></figure>
+<p>Server实现本地端口到端口的转发。可以当做是另外两个客户端A、B之间通信的中介。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;nc 是一个很好用的网络工具，在所有系统中都能找到它。他的主要用途是通过 tcp 、与 udp 读写数据。&lt;br&gt;因此有人用它来进行文件传输、端口转发、端口扫描、网络聊天等工作。&lt;/p&gt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>Kubernetes的一些基本插件，并且在墙内进行布置</title>
+    <link href="http://bxy09.github.io/2016/02/16/kubernetes-china-addons/"/>
+    <id>http://bxy09.github.io/2016/02/16/kubernetes-china-addons/</id>
+    <published>2016-02-16T16:11:49.000Z</published>
+    <updated>2017-08-09T09:10:23.894Z</updated>
+    
+    <content type="html"><![CDATA[<p>继上一篇博文之后，再介绍一些必要的K8s插件，并且将镜像搬入到国内。<br>介绍的插件包括：</p>
+<ol>
+<li>DNS Kubernetes内部的DNS，方便各个服务进行内部的服务发现。</li>
+<li>fluentd-elasticsearch/KFE (Kibana, Fluentd, Elasticsearch) 日志收集与展示。</li>
+<li>Dashboard web界面。</li>
+</ol>
+<p>Web UI现在官方有两个方案，但都没有达到稳定版本，因此不在此介绍。</p>
+<p>代码参见<a href="https://github.com/bxy09/k8s-addons" target="_blank" rel="external">https://github.com/bxy09/k8s-addons</a></p>
+<p>基本参照自kubernetes/cluster/addons</p>
+<a id="more"></a>
+<h2 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h2><p>相对于官方版本，只是将镜像从gcr搬运到daocloud.io</p>
+<h2 id="fluentd-elasticsearch"><a href="#fluentd-elasticsearch" class="headerlink" title="fluentd-elasticsearch"></a>fluentd-elasticsearch</h2><p>相对于官方版本，将镜像搬运到国内，并且缩减fluentd配置中关于docker,<br>k8s的日志项，因为systemd配置下的日志并不会存于/var/log/下单独的文件中，<br>而是通过journald来进行管理。<br>如果需要记录这些日志，请通过专门的fluentd-journal 插件进行读取，<br>或者通过journalctl与nc的组合，将日志转发到网络接口。</p>
+<p>另外，fluentd在每个节点上的运行时通过k8s的DaemonSet来进行的。<br>有别于一般常用的ReplicationController可以配置固定数量的pod，DaemonSet保证每个节点上运行一个pod。<br>DaemonSet目前需要v1beta版接口，因此需要在kube-apiserver中新加入参数(<code>--runtime-config=extensions/v1beta1/daemonsets=true</code>)并重启，添加该接口的支持。并且，还需要重启kube-controller-manager。</p>
+<p>访问地址：<a href="http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kibana-logging/" target="_blank" rel="external">http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kibana-logging/</a></p>
+<h2 id="Dashboard"><a href="#Dashboard" class="headerlink" title="Dashboard"></a>Dashboard</h2><p>相对于官方版本，将镜像搬运到国内daocloud.io。</p>
+<p>访问地址：<a href="http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard/" target="_blank" rel="external">http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard/</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;继上一篇博文之后，再介绍一些必要的K8s插件，并且将镜像搬入到国内。&lt;br&gt;介绍的插件包括：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;DNS Kubernetes内部的DNS，方便各个服务进行内部的服务发现。&lt;/li&gt;
+&lt;li&gt;fluentd-elasticsearch/KFE (Kibana, Fluentd, Elasticsearch) 日志收集与展示。&lt;/li&gt;
+&lt;li&gt;Dashboard web界面。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Web UI现在官方有两个方案，但都没有达到稳定版本，因此不在此介绍。&lt;/p&gt;
+&lt;p&gt;代码参见&lt;a href=&quot;https://github.com/bxy09/k8s-addons&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/bxy09/k8s-addons&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;基本参照自kubernetes/cluster/addons&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="kubernetes, docker, 云" scheme="http://bxy09.github.io/tags/kubernetes-docker-%E4%BA%91/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>kubernetes在中国墙内启动并且适应Systemd</title>
+    <link href="http://bxy09.github.io/2016/02/02/kubernetes-china-systemd/"/>
+    <id>http://bxy09.github.io/2016/02/02/kubernetes-china-systemd/</id>
+    <published>2016-02-02T10:48:00.000Z</published>
+    <updated>2017-08-09T09:10:23.894Z</updated>
+    
+    <content type="html"><![CDATA[<p>该配置适用于k8s v1.1版本，其他版本没有测试过，基本参照自ubuntu的配置方式（感谢浙大同学们的工作），<br>主要的区别在于将一些docker镜像从Google的源更换到国内的daocloud.io，以及适配Debian系统所用的Systemd服务模块(取代ubuntu中的upstart).</p>
+<p>基本参照于<a href="http://kubernetes.io/v1.1/docs/getting-started-guides/ubuntu.html" target="_blank" rel="external">k8s deployment on bare-metal ubuntu nodes</a>, 以下只介绍需要参与的部分以及修改的部分。</p>
+<p>最终工程为：<a href="https://github.com/bxy09/k8s-debian" target="_blank" rel="external">https://github.com/bxy09/k8s-debian</a></p>
+<p>在debian jessie下进行了测试，其他debian版本或者其他发行版请酌情修改。</p>
+<a id="more"></a>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">git clone https://github.com/kubernetes/kubernetes.git</div><div class="line">git clone https://github.com/bxy09/k8s-debian.git cluster/debian</div></pre></td></tr></table></figure>
+<h2 id="预先步骤"><a href="#预先步骤" class="headerlink" title="预先步骤"></a>预先步骤</h2><ol>
+<li>确保所有节点都安装了新版本的Docker,Sudo,bridge-utils。（实测，bridge-utils没安装的话，也可以通过人工方式将flannel网络加入到路由表中）。</li>
+<li>节点可以互相通信，为了方便起见，都设定好免密登录。</li>
+<li>每个节点都可以访问到docker repository，如果不能访问互联网，请设定自己内部可以访问到的源，修改pause以及其他addon所需要的image的地址。</li>
+<li>确保节点是通过systemd进行服务配置。</li>
+<li>测试过的版本为 k8s-1.1.4, flannel-0.5.5 , etcd-2.2.1。其他版本可能因为启动配置参数的变化，需要进行一些调整，在util.sh中<code>create-*-opts</code>各个函数的启动参数设定进行修改。</li>
+</ol>
+<h2 id="下载执行文件"><a href="#下载执行文件" class="headerlink" title="下载执行文件"></a>下载执行文件</h2><p>运行download-release.sh下载执行文件，可以通过修改以下环境变量修改下载的版本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">FLANNEL_VERSION</div><div class="line">ETCD_VERSION</div><div class="line">KUBE_VERSION</div></pre></td></tr></table></figure></p>
+<p>其中etcd用于保证高可用性与一致性的配置设定与共享；flannel用于建立vnets实现不同节点之间的pod间通信；Kube则是主角k8s。</p>
+<p>下载完成后的可执行文件放于<code>binaries/master</code>与<code>binaries/minion</code>中，分别对应于master节点和minion节点所需要的可执行程序。</p>
+<h2 id="设定节点角色"><a href="#设定节点角色" class="headerlink" title="设定节点角色"></a>设定节点角色</h2><p>修改config-default.sh<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">nodes 节点名称</div><div class="line">num_nodes 节点数目</div><div class="line">role 各个节点的角色，a为master，i为minion</div><div class="line">service_cluster_ip_range 是系统内用于定义服务以及实现负载均衡的虚拟ip段</div><div class="line">flannel_net 是flannel用来定义pod通信网络的</div></pre></td></tr></table></figure></p>
+<p>请注意，如果修改了<code>service_cluster_ip_range</code>,请也相应修改之后的<code>DNS_SERVER_IP</code>，这个IP定义了DNS服务对应的虚拟IP。</p>
+<p>该版本的配置只支持单master节点的集群，之后将研究多master节点从而实现High Availability。</p>
+<h2 id="布置集群"><a href="#布置集群" class="headerlink" title="布置集群"></a>布置集群</h2><p>直接启动脚本，完成配置。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">KUBERNETES_PROVIDER=debian ./cluster/kube-up.sh</div></pre></td></tr></table></figure></p>
+<p>以下简要介绍以下实际工作步骤，以及debian版本所做的修改。</p>
+<h3 id="kube-up"><a href="#kube-up" class="headerlink" title="kube-up"></a>kube-up</h3><p>./cluster/kube-up.sh 中启动 ./cluster/debian/util.sh 中的kube-up函数。<br>首先加载之前填入的config-default.sh中的配置。</p>
+<p>setClusterInfo从配置中nodes与roles得到得到master节点Master_IP和minion众节点Node_IPS。</p>
+<p>其后则是遍历各个节点由各个节点不同角色启动不同的配置函数。</p>
+<h4 id="provision-masterandnode"><a href="#provision-masterandnode" class="headerlink" title="provision-masterandnode"></a>provision-masterandnode</h4><p>以该节点同时担任master节点和minion节点为例，其他情况为该情况的子集。</p>
+<p>首先在目标节点的用户目录下建一个临时的文件夹<code>~/kube</code>，并且将可执行程序与配置文件都拷贝到节点。</p>
+<p>EXTRA_SANS是附属在之后建立的签名中的，详情参考<a href="http://kubernetes.io/v1.1/docs/admin/authentication.html" target="_blank" rel="external">k8s Authentication Plugins</a>。</p>
+<p>之后主要是生成各个组件的默认配置，包括etcd, kube-apiserver, kube-controller-manager, kube-scheduler, kubelet, kube-proxy, , kube-proxy 以及 flanneld。其中kubelet, kube-proxy 是起到minion作用的，flannel是所有节点都要的，剩下的都是master所必须的。</p>
+<p>其中，为了适应中国的网络环境，在kubelet的配置中添加了pod-infra-container-image=daocloud.io/gpx_dev/pause:0.8.0，pause image的作用在于启动一个什么都不干的container作为pod内其他container共享文件系统、网络等namespace的公共区域。如果不加入这个设置，则系统将会向Google自己的docker源拖取镜像。</p>
+<p>然后则用管理员权限，将默认配置复制到<code>/etc/default</code>目录下，将systemd配置复制到<code>/lib/systemd/system</code>目录下。<br>生成签名证书到<code>/svc/kubernetes</code>目录下。<br>复制可执行程序到<code>/opt/bin</code>目录下。<br>启动etcd服务。</p>
+<p>reconfDocker中，一方面在etcd中登记flanneld网络的配置，另一方面修改docker systemd配置，以及<code>/etc/default/docker</code>中的默认配置，使得Docker启动的container改用flanneld网络。</p>
+<h4 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h4><p><code>verify-cluster</code>通过远程登录，确认各个节点都启动了相应的模块。<br><code>detect-master</code> 拿到KUBE_MASTER_IP。之后一系列<code>kubectl</code>命令都是指向该节点的api服务器。</p>
+<p><code>load-or-gen-kube-basicauth</code> 和 <code>kube-config</code> 进行一些账户与安全的设置等。</p>
+<h2 id="安装附件"><a href="#安装附件" class="headerlink" title="安装附件"></a>安装附件</h2><p>重要的附件包括配置DNS，Kube-UI, KFE(Kibana Fluentd Elasticsearch)。将在下一篇博文中进行介绍。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;该配置适用于k8s v1.1版本，其他版本没有测试过，基本参照自ubuntu的配置方式（感谢浙大同学们的工作），&lt;br&gt;主要的区别在于将一些docker镜像从Google的源更换到国内的daocloud.io，以及适配Debian系统所用的Systemd服务模块(取代ubuntu中的upstart).&lt;/p&gt;
+&lt;p&gt;基本参照于&lt;a href=&quot;http://kubernetes.io/v1.1/docs/getting-started-guides/ubuntu.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;k8s deployment on bare-metal ubuntu nodes&lt;/a&gt;, 以下只介绍需要参与的部分以及修改的部分。&lt;/p&gt;
+&lt;p&gt;最终工程为：&lt;a href=&quot;https://github.com/bxy09/k8s-debian&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/bxy09/k8s-debian&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;在debian jessie下进行了测试，其他debian版本或者其他发行版请酌情修改。&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="kubernetes, docker, 云, systemd" scheme="http://bxy09.github.io/tags/kubernetes-docker-%E4%BA%91-systemd/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>中国股市的复权</title>
+    <link href="http://bxy09.github.io/2016/02/01/chinese-market-adjust/"/>
+    <id>http://bxy09.github.io/2016/02/01/chinese-market-adjust/</id>
+    <published>2016-02-01T21:54:12.000Z</published>
+    <updated>2017-08-09T09:10:23.894Z</updated>
+    
+    <content type="html"><![CDATA[<p>在沪深上市企业发生配股、分红、赠股时，由于流通股数的变化，以及公司市值的变化，导致最后一个交易日的收盘价不能准确反映股票的价值。因而，交易所会对于最后一个交易日的收盘价进行一些修正，也就是昨收的修正。昨收在新的交易日可以作为一个初始的指导价格，虽然股票的最终价格还是由买卖双方通过市场来确定的，但正确修正的昨收价格设定任然有着多方面的意义。</p>
+<a id="more"></a>
+<h2 id="复权的意义"><a href="#复权的意义" class="headerlink" title="复权的意义"></a>复权的意义</h2><p>首先，交易所给出的昨收价格是用来确定第二天的涨跌停价格的，而如果交易所的昨收价格不合理，则也会导致涨跌停价格的不合理，从而导致股票价格无法在涨跌停范围内落入到其实际价值位置，并且可能导致一些人的错误投资。</p>
+<p>其次，正确修正后的历史价格才会对数据的技术分析有用。例如最简单的移动平均值，以及支撑位股价等，都和历史价格有关，而不同的复权修正也会极大的影响这些数值。</p>
+<h2 id="交易所的复权"><a href="#交易所的复权" class="headerlink" title="交易所的复权"></a>交易所的复权</h2><p>交易所修正昨日收盘价的基本思路为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">复权后的股价P&apos; * 现在的股数 M&apos; = 之前的总市值A + 总市值的变化 D</div><div class="line">之前的总市值A = 之前的股价P * 之前的股数 M</div></pre></td></tr></table></figure></p>
+<p>我们所要求的值就是<code>P&#39;</code></p>
+<p>我们分析三种典型的事件：</p>
+<h3 id="纯粹的赠股"><a href="#纯粹的赠股" class="headerlink" title="纯粹的赠股"></a>纯粹的赠股</h3><p>例如 宏昌电子(603002)在2015年12月23日除权除息，事件为10转5股，其作用主要是增多了流通股数，而对公司流通市值没有影响，具体为:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">M&apos; = 1.5M</div><div class="line">D = 0</div></pre></td></tr></table></figure></p>
+<p>因此得到<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">P&apos; * 1.5M = P * M</div><div class="line">P&apos; = P/1.5</div></pre></td></tr></table></figure></p>
+<p>在今天(2016-02-01)看到的2015年12月22日的前复权收盘价格为：8.107，原始价格为12.16，符合推算公式。</p>
+<h3 id="赠股加现金分红"><a href="#赠股加现金分红" class="headerlink" title="赠股加现金分红"></a>赠股加现金分红</h3><p>例如 吉祥航空(603885)在2015年12月28日除权除息，事件为10转10股，每10股现金分红 6元。它增加了流通股数，又因为分红，公司的流通市值需要扣去花费的现金，具体为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">M&apos; = 2M</div><div class="line">D = - 6*(M/10)</div></pre></td></tr></table></figure></p>
+<p>因此得到<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">P&apos; * 2M = P * M - 0.6M</div><div class="line">P&apos; = 0.5P-0.3</div></pre></td></tr></table></figure></p>
+<p>在今天(2016-02-01)看到的2015年12月25日的前复权收盘价为：37.2元，原始价格为：75.0，符合推算公式。</p>
+<h3 id="配股"><a href="#配股" class="headerlink" title="配股"></a>配股</h3><p>例如 隆基机械(002363)在2016年2月1日除权除息，事件为每十股配三股，每股5.57元。配股同样增多了流通股数，同时公司的流通市值增加了配股售卖得到的资金。但是，配股数是持股人能按设定价格购买的上限，也就是可能没有全部卖完。因此，流通股数的变化和市值的变化需要参考实际的销售情况。从我所看到的几个配股发行结果公告来看，深圳交易所的股票都会给出一个等效的配股售卖数量。例如下图：</p>
+<p><img src="/images/2016/02/002363-adjust.png" alt="隆基机械 配股发行结果公告"></p>
+<p>但是，上海交易所的股票虽然也会给出售卖情况，但是交易所在设定昨收时，我所看到的近期的例子中（太平洋 601099 2016年1月25日），没有参考售卖情况，而是直接按照全部售卖成功的情况进行处理。</p>
+<p>另外，很多股票软件（大智慧，通达信，富途牛牛等）无论沪深股市，都是用的全部售空情况进行的处理。这会导致一些深市股票在除权除息后的当日昨收（交易所给出）与上一个交易日前复权后的收盘价（股票软件计算）不一致，如下图：<br><img src="/images/2016/02/preclose.png" alt="隆基机械 2015/02/01昨收"><br><img src="/images/2016/02/ltd-close.png" alt="隆基机械 2015/01/21前复权收盘"></p>
+<p>设出售比例设为每十股配<code>a</code>股,对于这次隆基机械的配股，股票软件用的是3，而深圳交易所用的是2.9141。具体得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">M&apos; = M+(M/10)*a</div><div class="line">D = (M/10)*a*5.57</div></pre></td></tr></table></figure></p>
+<p>因此得到<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">P&apos;*(M+M/10*a)=P*M+(M/10)*a*5.57</div><div class="line">P&apos;=(P+5.57a/10)/(1+a/10)</div></pre></td></tr></table></figure></p>
+<p>2015年1月21日的隆基机械的原始股价为14.63，当a为3时，得到复权后股价为12.539，与12.54的股票软件复权价相符。当a为2.9141时，得到复权后股价为12.586，与12.59的交易所昨收相符。</p>
+<h2 id="更久远历史的复权"><a href="#更久远历史的复权" class="headerlink" title="更久远历史的复权"></a>更久远历史的复权</h2><p>以上主要讨论的是交易所的复权，而交易所只关心上一个交易日一天的除权除息，从而给新的一天提供指导。但对于股票分析软件或者量化投资者而言，更久远历史的复权也是非常有必要的。</p>
+<p>很多股票分析软件（大智慧，通达信，富途牛牛等），都是按照交易所的公式，将更早交易日的原始股价代入公式后求解复权后股价（在细节上有所差异，如之前所说的深市配股情况）。这种方案的主要缺点包括：</p>
+<ol>
+<li>计算复杂，尤其是复权次数多了之后。</li>
+<li>现金分红会导致公司市值下降，甚至在公司早期原本市值较低的情况下，出现扣除分红后负市值的情况，从而导致负的复权后价格。负数价格对于很多技术指标计算是有害的，例如几何平均值。</li>
+<li>导致复权后单日的涨跌幅发生变化。</li>
+</ol>
+<p>因此存在另一流派，直接用交易所给出的除权除息日昨收和上一交易日的实际收盘价相除得到一个复权因子，再将历史股价乘以这个因子得到前复权的股价。这种方案计算简单，在多次复权之后任然只是一个简单的因子乘法。并且不会产生负数股价，不会影响单日涨跌幅。新浪财经，优矿，万德所给的数据都是依据这种方案进行复权。其中万德的方案有些特殊，他所用来求解复权因子的昨收不是交易所公式给的昨收，而是类似于股票软件方案的昨收，差异在于深市股票对于实际配股售卖情况的考量。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;在沪深上市企业发生配股、分红、赠股时，由于流通股数的变化，以及公司市值的变化，导致最后一个交易日的收盘价不能准确反映股票的价值。因而，交易所会对于最后一个交易日的收盘价进行一些修正，也就是昨收的修正。昨收在新的交易日可以作为一个初始的指导价格，虽然股票的最终价格还是由买卖双方通过市场来确定的，但正确修正的昨收价格设定任然有着多方面的意义。&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="股市, 数据" scheme="http://bxy09.github.io/tags/%E8%82%A1%E5%B8%82-%E6%95%B0%E6%8D%AE/"/>
+    
+  </entry>
+  
+</feed>

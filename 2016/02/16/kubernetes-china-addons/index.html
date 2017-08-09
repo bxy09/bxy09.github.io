@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="cn"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> Kubernetes的一些基本插件，并且在墙内进行布置 · Bxy's blog</title><meta name="description" content="Kubernetes的一些基本插件，并且在墙内进行布置 - bxy"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://bxy09.github.io/atom.xml" title="Bxy's blog"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="http://weibo.com/u/1688817302" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/bxy09" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">Kubernetes的一些基本插件，并且在墙内进行布置</h1><div class="post-info">Feb 16, 2016</div><div class="post-content"><p>继上一篇博文之后，再介绍一些必要的K8s插件，并且将镜像搬入到国内。<br>介绍的插件包括：</p>
+<ol>
+<li>DNS Kubernetes内部的DNS，方便各个服务进行内部的服务发现。</li>
+<li>fluentd-elasticsearch/KFE (Kibana, Fluentd, Elasticsearch) 日志收集与展示。</li>
+<li>Dashboard web界面。</li>
+</ol>
+<p>Web UI现在官方有两个方案，但都没有达到稳定版本，因此不在此介绍。</p>
+<p>代码参见<a href="https://github.com/bxy09/k8s-addons" target="_blank" rel="external">https://github.com/bxy09/k8s-addons</a></p>
+<p>基本参照自kubernetes/cluster/addons</p>
+<a id="more"></a>
+<h2 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h2><p>相对于官方版本，只是将镜像从gcr搬运到daocloud.io</p>
+<h2 id="fluentd-elasticsearch"><a href="#fluentd-elasticsearch" class="headerlink" title="fluentd-elasticsearch"></a>fluentd-elasticsearch</h2><p>相对于官方版本，将镜像搬运到国内，并且缩减fluentd配置中关于docker,<br>k8s的日志项，因为systemd配置下的日志并不会存于/var/log/下单独的文件中，<br>而是通过journald来进行管理。<br>如果需要记录这些日志，请通过专门的fluentd-journal 插件进行读取，<br>或者通过journalctl与nc的组合，将日志转发到网络接口。</p>
+<p>另外，fluentd在每个节点上的运行时通过k8s的DaemonSet来进行的。<br>有别于一般常用的ReplicationController可以配置固定数量的pod，DaemonSet保证每个节点上运行一个pod。<br>DaemonSet目前需要v1beta版接口，因此需要在kube-apiserver中新加入参数(<code>--runtime-config=extensions/v1beta1/daemonsets=true</code>)并重启，添加该接口的支持。并且，还需要重启kube-controller-manager。</p>
+<p>访问地址：<a href="http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kibana-logging/" target="_blank" rel="external">http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kibana-logging/</a></p>
+<h2 id="Dashboard"><a href="#Dashboard" class="headerlink" title="Dashboard"></a>Dashboard</h2><p>相对于官方版本，将镜像搬运到国内daocloud.io。</p>
+<p>访问地址：<a href="http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard/" target="_blank" rel="external">http://master-ip:8080/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard/</a></p>
+</div></article></div></main><footer><div class="paginator"><a href="/2016/03/11/nc/" class="prev">PREV</a><a href="/2016/02/02/kubernetes-china-systemd/" class="next">NEXT</a></div><div data-thread-key="2016/02/16/kubernetes-china-addons/" data-title="Kubernetes的一些基本插件，并且在墙内进行布置" data-url="http://bxy09.github.io/2016/02/16/kubernetes-china-addons/" data-author-key="1" class="ds-thread"></div><script>var duoshuoQuery = {short_name:"bxyblog"};
+(function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+     || document.getElementsByTagName('body')[0]).appendChild(ds);
+})();
+
+</script><div class="copyright"><p>© 2016 - 2017 <a href="http://bxy09.github.io">bxy</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
